@@ -70,6 +70,10 @@ fi
 
 as_root() {
   if [[ "$(id -u)" -eq 0 ]]; then
+    # Allow callers to pass sudo-style flags without breaking root execution.
+    if [[ "${1:-}" == "-E" ]]; then
+      shift
+    fi
     "$@"
   else
     sudo "$@"
