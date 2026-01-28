@@ -47,8 +47,8 @@ export function applyZaiConfig(cfg: OpenClawConfig): OpenClawConfig {
         model: {
           ...(existingModel && "fallbacks" in (existingModel as Record<string, unknown>)
             ? {
-                fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
-              }
+              fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
+            }
             : undefined),
           primary: ZAI_DEFAULT_MODEL_REF,
         },
@@ -107,8 +107,8 @@ export function applyVercelAiGatewayConfig(cfg: OpenClawConfig): OpenClawConfig 
         model: {
           ...(existingModel && "fallbacks" in (existingModel as Record<string, unknown>)
             ? {
-                fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
-              }
+              fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
+            }
             : undefined),
           primary: VERCEL_AI_GATEWAY_DEFAULT_MODEL_REF,
         },
@@ -129,8 +129,8 @@ export function applyOpenrouterConfig(cfg: OpenClawConfig): OpenClawConfig {
         model: {
           ...(existingModel && "fallbacks" in (existingModel as Record<string, unknown>)
             ? {
-                fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
-              }
+              fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
+            }
             : undefined),
           primary: OPENROUTER_DEFAULT_MODEL_REF,
         },
@@ -194,8 +194,8 @@ export function applyMoonshotConfig(cfg: OpenClawConfig): OpenClawConfig {
         model: {
           ...(existingModel && "fallbacks" in (existingModel as Record<string, unknown>)
             ? {
-                fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
-              }
+              fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
+            }
             : undefined),
           primary: MOONSHOT_DEFAULT_MODEL_REF,
         },
@@ -259,8 +259,8 @@ export function applyKimiCodeConfig(cfg: OpenClawConfig): OpenClawConfig {
         model: {
           ...(existingModel && "fallbacks" in (existingModel as Record<string, unknown>)
             ? {
-                fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
-              }
+              fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
+            }
             : undefined),
           primary: KIMI_CODE_MODEL_REF,
         },
@@ -328,8 +328,8 @@ export function applySyntheticConfig(cfg: OpenClawConfig): OpenClawConfig {
         model: {
           ...(existingModel && "fallbacks" in (existingModel as Record<string, unknown>)
             ? {
-                fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
-              }
+              fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
+            }
             : undefined),
           primary: SYNTHETIC_DEFAULT_MODEL_REF,
         },
@@ -399,8 +399,8 @@ export function applyXiaomiConfig(cfg: OpenClawConfig): OpenClawConfig {
         model: {
           ...(existingModel && "fallbacks" in (existingModel as Record<string, unknown>)
             ? {
-                fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
-              }
+              fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
+            }
             : undefined),
           primary: XIAOMI_DEFAULT_MODEL_REF,
         },
@@ -474,8 +474,8 @@ export function applyVeniceConfig(cfg: OpenClawConfig): OpenClawConfig {
         model: {
           ...(existingModel && "fallbacks" in (existingModel as Record<string, unknown>)
             ? {
-                fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
-              }
+              fallbacks: (existingModel as { fallbacks?: string[] }).fallbacks,
+            }
             : undefined),
           primary: VENICE_DEFAULT_MODEL_REF,
         },
@@ -510,18 +510,18 @@ export function applyAuthProfileConfig(
   const reorderedProviderOrder =
     existingProviderOrder && preferProfileFirst
       ? [
-          params.profileId,
-          ...existingProviderOrder.filter((profileId) => profileId !== params.profileId),
-        ]
+        params.profileId,
+        ...existingProviderOrder.filter((profileId) => profileId !== params.profileId),
+      ]
       : existingProviderOrder;
   const order =
     existingProviderOrder !== undefined
       ? {
-          ...cfg.auth?.order,
-          [params.provider]: reorderedProviderOrder?.includes(params.profileId)
-            ? reorderedProviderOrder
-            : [...(reorderedProviderOrder ?? []), params.profileId],
-        }
+        ...cfg.auth?.order,
+        [params.provider]: reorderedProviderOrder?.includes(params.profileId)
+          ? reorderedProviderOrder
+          : [...(reorderedProviderOrder ?? []), params.profileId],
+      }
       : cfg.auth?.order;
   return {
     ...cfg,
