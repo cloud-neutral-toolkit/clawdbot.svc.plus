@@ -29,8 +29,10 @@ import type {
 import type { DevicePairingList } from "./controllers/devices";
 import type { ExecApprovalRequest } from "./controllers/exec-approval";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form";
+import type { ConsoleUser } from "./console-auth";
 
 export type AppViewState = {
+  consoleUser: ConsoleUser | null;
   settings: UiSettings;
   password: string;
   tab: Tab;

@@ -40,6 +40,8 @@ export type NodePairingPairedNode = {
   createdAtMs: number;
   approvedAtMs: number;
   lastConnectedAtMs?: number;
+  userUuid?: string;
+  userEmail?: string;
 };
 
 export type NodePairingList = {
@@ -211,6 +213,8 @@ export async function requestNodePairing(
 
 export async function approveNodePairing(
   requestId: string,
+  userUuid?: string,
+  userEmail?: string,
   baseDir?: string,
 ): Promise<{ requestId: string; node: NodePairingPairedNode } | null> {
   return await withLock(async () => {
@@ -236,6 +240,8 @@ export async function approveNodePairing(
       remoteIp: pending.remoteIp,
       createdAtMs: existing?.createdAtMs ?? now,
       approvedAtMs: now,
+      userUuid,
+      userEmail,
     };
 
     delete state.pendingById[requestId];

@@ -78,6 +78,7 @@ import {
 } from "./app-channels";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form";
 import { loadAssistantIdentity as loadAssistantIdentityInternal } from "./controllers/assistant-identity";
+import { fetchConsoleUser, type ConsoleUser } from "./console-auth";
 
 declare global {
   interface Window {
@@ -98,6 +99,7 @@ function resolveOnboardingMode(): boolean {
 
 @customElement("clawdbot-app")
 export class ClawdbotApp extends LitElement {
+  @state() consoleUser: ConsoleUser | null = null;
   @state() settings: UiSettings = loadSettings();
   @state() password = "";
   @state() tab: Tab = "chat";
@@ -277,6 +279,11 @@ export class ClawdbotApp extends LitElement {
 
   protected firstUpdated() {
     handleFirstUpdated(this as unknown as Parameters<typeof handleFirstUpdated>[0]);
+    void this.loadConsoleUser();
+  }
+
+  async loadConsoleUser() {
+    this.consoleUser = await fetchConsoleUser();
   }
 
   disconnectedCallback() {

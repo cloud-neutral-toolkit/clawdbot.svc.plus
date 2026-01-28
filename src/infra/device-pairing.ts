@@ -53,6 +53,8 @@ export type PairedDevice = {
   tokens?: Record<string, DeviceAuthToken>;
   createdAtMs: number;
   approvedAtMs: number;
+  userUuid?: string;
+  userEmail?: string;
 };
 
 export type DevicePairingList = {
@@ -273,6 +275,8 @@ export async function requestDevicePairing(
 
 export async function approveDevicePairing(
   requestId: string,
+  userUuid?: string,
+  userEmail?: string,
   baseDir?: string,
 ): Promise<{ requestId: string; device: PairedDevice } | null> {
   return await withLock(async () => {
@@ -313,6 +317,8 @@ export async function approveDevicePairing(
       tokens,
       createdAtMs: existing?.createdAtMs ?? now,
       approvedAtMs: now,
+      userUuid,
+      userEmail,
     };
     delete state.pendingById[requestId];
     state.pairedByDeviceId[device.deviceId] = device;

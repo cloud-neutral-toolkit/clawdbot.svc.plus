@@ -63,10 +63,18 @@ export async function loadDevices(state: DevicesState, opts?: { quiet?: boolean 
   }
 }
 
-export async function approveDevicePairing(state: DevicesState, requestId: string) {
+export async function approveDevicePairing(
+  state: DevicesState,
+  requestId: string,
+  user?: { uuid: string; email: string; } | null,
+) {
   if (!state.client || !state.connected) return;
   try {
-    await state.client.request("device.pair.approve", { requestId });
+    await state.client.request("device.pair.approve", {
+      requestId,
+      userUuid: user?.uuid,
+      userEmail: user?.email,
+    });
     await loadDevices(state);
   } catch (err) {
     state.devicesError = String(err);

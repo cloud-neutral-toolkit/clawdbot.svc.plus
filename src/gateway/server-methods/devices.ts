@@ -68,8 +68,8 @@ export const deviceHandlers: GatewayRequestHandlers = {
       );
       return;
     }
-    const { requestId } = params as { requestId: string };
-    const approved = await approveDevicePairing(requestId);
+    const { requestId, userUuid, userEmail } = params as { requestId: string; userUuid?: string; userEmail?: string };
+    const approved = await approveDevicePairing(requestId, userUuid, userEmail);
     if (!approved) {
       respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "unknown requestId"));
       return;
