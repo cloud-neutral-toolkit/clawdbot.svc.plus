@@ -97,7 +97,11 @@ ensure_node24() {
   if [[ "$need_install" -eq 1 ]]; then
     as_root apt-get update
     as_root apt-get install -y curl ca-certificates
-    curl -fsSL https://deb.nodesource.com/setup_24.x | as_root -E bash -
+    if [[ $(id -u) -eq 0 ]]; then
+      curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
+    else
+      curl -fsSL https://deb.nodesource.com/setup_24.x | as_root -E bash -
+    fi
     as_root apt-get install -y nodejs
   fi
 }
