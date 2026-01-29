@@ -7,6 +7,8 @@ GIT_REPO="${GIT_REPO:-https://github.com/cloud-neutral-toolkit/clawdbot.svc.plus
 CLAWDBOT_VERSION="${CLAWDBOT_VERSION:-latest}"
 CERTBOT_EMAIL="${CERTBOT_EMAIL:-}"
 PUBLIC_SCHEME="https"
+OS_FAMILY="linux"
+OS_NAME="$(uname -s 2>/dev/null || true)"
 
 usage() {
   cat <<'EOF'
@@ -56,16 +58,33 @@ if [[ "$INSTALL_METHOD" != "npm" && "$INSTALL_METHOD" != "git" ]]; then
   exit 1
 fi
 
-if [[ -f /etc/os-release ]]; then
-  . /etc/os-release
-else
-  echo "Unsupported OS (missing /etc/os-release)."
-  exit 1
+case "$OS_NAME" in
+  Darwin)
+    OS_FAMILY="darwin"
+    ;;
+  Linux)
+    OS_FAMILY="linux"
+    ;;
+  *)
+    echo "Unsupported OS: ${OS_NAME:-unknown}"
+    exit 1
+    ;;
+esac
+
+if [[ "$OS_FAMILY" == "linux" ]]; then
+  if [[ -f /etc/os-release ]]; then
+    . /etc/os-release
+  else
+    echo "Unsupported Linux (missing /etc/os-release)."
+    exit 1
+  fi
 fi
 
-if [[ "${ID:-}" != "debian" && "${ID_LIKE:-}" != *"debian"* ]]; then
-  echo "This installer currently supports Debian-based systems only."
-  exit 1
+if [[ "$OS_FAMILY" == "linux" ]]; then
+  if [[ "${ID:-}" != "debian" && "${ID_LIKE:-}" != *"debian"* ]]; then
+    echo "This installer currently supports Debian-based systems only."
+    exit 1
+  fi
 fi
 
 as_root() {
@@ -110,6 +129,46 @@ ensure_node24() {
   fi
 }
 
+ensure_node24_darwin() {
+  local need_install=1
+  if command -v node >/dev/null 2>&1; then
+    local major
+    major="$(node -v | sed -E 's/^v([0-9]+).*/\1/')"
+    if [[ "${major:-0}" -ge 24 ]]; then
+      need_install=0
+    fi
+  fi
+  if [[ "$need_install" -eq 1 ]]; then
+    if command -v brew >/dev/null 2>&1; then
+      brew install node@24 || brew install node
+      if brew list node@24 >/dev/null 2>&1; then
+        brew link --overwrite --force node@24
+      fi
+    else
+      local arch pkg_name pkg_url pkg_path
+      arch="$(uname -m)"
+      case "$arch" in
+        arm64) arch="arm64" ;;
+        x86_64) arch="x64" ;;
+        *)
+          echo "Unsupported macOS architecture: ${arch}"
+          exit 1
+          ;;
+      esac
+      pkg_name="$(curl -fsSL https://nodejs.org/dist/latest-v24.x/ \
+        | awk -F\" -v arch="$arch" '/node-v24.*-darwin-/{if ($2 ~ ("-darwin-" arch "\\.pkg$")) {print $2; exit}}')"
+      if [[ -z "$pkg_name" ]]; then
+        echo "Failed to find a Node.js v24 macOS installer."
+        exit 1
+      fi
+      pkg_url="https://nodejs.org/dist/latest-v24.x/${pkg_name}"
+      pkg_path="/tmp/${pkg_name}"
+      curl -fsSL "$pkg_url" -o "$pkg_path"
+      as_root installer -pkg "$pkg_path" -target /
+    fi
+  fi
+}
+
 ensure_packages() {
   local packages=(git curl ca-certificates ufw)
   if [[ "$PROXY" == "nginx" ]]; then
@@ -119,6 +178,18 @@ ensure_packages() {
   fi
   as_root apt-get update
   as_root apt-get install -y "${packages[@]}"
+}
+
+ensure_packages_darwin() {
+  if [[ "$PROXY" == "nginx" ]]; then
+    echo "nginx + Certbot is not supported on macOS in this installer. Use PROXY=caddy."
+    exit 1
+  fi
+  if ! command -v brew >/dev/null 2>&1; then
+    echo "Homebrew is required on macOS. Install it from https://brew.sh and re-run."
+    exit 1
+  fi
+  brew install git caddy curl
 }
 
 ensure_pnpm() {
@@ -136,6 +207,11 @@ configure_firewall() {
   if as_root ufw status | grep -q "Status: inactive"; then
     as_root ufw --force enable >/dev/null
   fi
+}
+
+configure_firewall_darwin() {
+  # macOS uses application-level firewall; leave port management to the operator.
+  return 0
 }
 
 install_clawdbot_npm() {
@@ -206,13 +282,26 @@ configure_certbot() {
 
 configure_caddy() {
   local service="/etc/caddy/Caddyfile"
+  if [[ "$OS_FAMILY" == "darwin" ]]; then
+    if command -v brew >/dev/null 2>&1; then
+      service="$(brew --prefix)/etc/Caddyfile"
+    fi
+  fi
   cat <<EOF | as_root tee "$service" >/dev/null
 ${DOMAIN} {
   reverse_proxy 127.0.0.1:18789
 }
 EOF
-  as_root systemctl enable --now caddy
-  as_root systemctl reload caddy
+  if [[ "$OS_FAMILY" == "darwin" ]]; then
+    if command -v brew >/dev/null 2>&1; then
+      brew services start caddy || brew services restart caddy
+    else
+      as_root caddy start --config "$service"
+    fi
+  else
+    as_root systemctl enable --now caddy
+    as_root systemctl reload caddy
+  fi
 }
 
 configure_proxy() {
@@ -246,10 +335,19 @@ run_health_checks() {
 }
 
 echo "==> Domain: ${DOMAIN}"
-ensure_packages
-ensure_node24
+if [[ "$OS_FAMILY" == "darwin" ]]; then
+  ensure_packages_darwin
+  ensure_node24_darwin
+else
+  ensure_packages
+  ensure_node24
+fi
 ensure_pnpm
-configure_firewall
+if [[ "$OS_FAMILY" == "darwin" ]]; then
+  configure_firewall_darwin
+else
+  configure_firewall
+fi
 install_clawdbot
 configure_clawdbot
 configure_proxy
@@ -263,5 +361,13 @@ Access control and TLS are handled by ${PROXY^^}.
 
 If you need to tweak config later:
   - \`clawdbot config get gateway.trustedProxies\`
-  - \`journalctl --user -u clawdbot-gateway --no-pager\`
+EOF
+
+if [[ "$OS_FAMILY" == "darwin" ]]; then
+  cat <<'EOF'
+  - `tail -f /tmp/clawdbot/clawdbot-gateway.log`
+EOF
+else
+  cat <<'EOF'
+  - `journalctl --user -u clawdbot-gateway --no-pager`
 EOF
