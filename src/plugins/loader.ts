@@ -10,6 +10,7 @@ import { resolveUserPath } from "../utils.js";
 import { discoverOpenClawPlugins } from "./discovery.js";
 import { loadPluginManifestRegistry } from "./manifest-registry.js";
 import {
+  applyTestPluginDefaults,
   normalizePluginsConfig,
   resolveEnableState,
   resolveMemorySlotDecision,
@@ -103,8 +104,8 @@ function resolvePluginModuleExport(moduleExport: unknown): {
 } {
   const resolved =
     moduleExport &&
-    typeof moduleExport === "object" &&
-    "default" in (moduleExport as Record<string, unknown>)
+      typeof moduleExport === "object" &&
+      "default" in (moduleExport as Record<string, unknown>)
       ? (moduleExport as { default: unknown }).default
       : moduleExport;
   if (typeof resolved === "function") {
@@ -162,7 +163,7 @@ function pushDiagnostics(diagnostics: PluginDiagnostic[], append: PluginDiagnost
 }
 
 export function loadOpenClawPlugins(options: PluginLoadOptions = {}): PluginRegistry {
-  const cfg = options.config ?? {};
+  const cfg = applyTestPluginDefaults(options.config ?? {});
   const logger = options.logger ?? defaultLogger();
   const validateOnly = options.mode === "validate";
   const normalized = normalizePluginsConfig(cfg.plugins);
@@ -208,8 +209,8 @@ export function loadOpenClawPlugins(options: PluginLoadOptions = {}): PluginRegi
     extensions: [".ts", ".tsx", ".mts", ".cts", ".mtsx", ".ctsx", ".js", ".mjs", ".cjs", ".json"],
     ...(pluginSdkAlias
       ? {
-          alias: { "openclaw/plugin-sdk": pluginSdkAlias },
-        }
+        alias: { "openclaw/plugin-sdk": pluginSdkAlias },
+      }
       : {}),
   });
 
