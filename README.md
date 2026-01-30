@@ -90,7 +90,7 @@ clawdbot agent --message "Ship checklist" --thinking high
 
 ```bash
 # default install (latest release, hostname domain)
-curl -fsSL https://raw.githubusercontent.com/cloud-neutral-toolkit/clawdbot.svc.plus/main/scripts/init_vhost.sh | bash
+curl -fsSL https://raw.githubusercontent.com/cloud-neutral-toolkit/clawbot.svc.plus/main/scripts/init_vhost.sh | bash
 
 # specify domain
 curl -fsSL https://raw.githubusercontent.com/cloud-neutral-toolkit/clawdbot.svc.plus/main/scripts/init_vhost.sh \
